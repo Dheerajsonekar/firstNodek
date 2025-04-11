@@ -1,34 +1,52 @@
-const http = require("http");
+const http = require('http');
+const fs = require('fs');
 
-const server = http.createServer((req, res) => {
-  res.setHeader("Content-Type", "text/html");
+const server = http.createServer((req, res)=>{
+  const url = req.url;
+  const method = req.method;
 
-  let message = "";
+   if(url==='/'){
+     //form
+     res.setHeader('Content-Type', 'text/html');
 
-  switch (req.url) {
-    case "/home":
-      message = "welcome to home page";
-      break;
-    case "/node":
-      message = "welcome to node page";
-      break;
-    case "/about":
-      message = "welcome to about page";
-      break;
-    default:
-      message = "page not found";
-      break;
-  }
+     res.end(`<form action="/message" method="POST">
+      <label>Enter Text: </label>
+      <input type="text" name="username" />
+      <button type="submit">Add</button>
+      </form>`)
 
-  res.write(`<html>
-        <head><title>Response</title></head>
-        <body><h1>${message}</h1></body>
-        </html>`);
 
-  res.end();
-});
+   }
+   else {
+    if(url==='/message'){
+      
+      res.setHeader("Content-Type", "text/html");
 
+      let body = [];
+      req.on("data", (chunks)=>{
+        body.push(chunks);
+      })
+
+      req.on("end", ()=>{
+        let buffer = Buffer.concat(body);
+        let formData = buffer.toString();
+        let formValue = formData.split('=')[1];
+
+        fs.writeFile("data.txt", formValue, (err)=>{
+        res.statusCode = 302;
+        res.setHeader('Location', '/');
+        res.end();
+      })
+      } )
+
+     
+
+    }
+   }
+
+
+})
 
 server.listen(3000, ()=>{
-    console.log("server is running");
+  console.log("server is running.")
 })
